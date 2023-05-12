@@ -1,6 +1,6 @@
-from flask import Flask
-import requests
+from flask import Flask, render_template, request, jsonify
 import weaviate
+from search_image import weaviate_img_search
 
 # auth_config = weaviate.auth.AuthApiKey(api_key="bGIkcpYcw0K5Uki8tHVD6di4MGOU0jTIQBCU")  # Replace w/ your API Key for the Weaviate instance
 
@@ -12,8 +12,24 @@ app = Flask(__name__)
 @app.route("/")
 def hello_world():
 	data = client.query.get('PokemonCards', ['image']).do()
-	all_images = data['data']['Get']['PokemonCards']
-	images_html = ''
-	for image in all_images:
-		images_html += f"<img src='data:image/jpeg;base64,{image['image']}' />"
-	return f"<p>{images_html}</p>"
+	images = data['data']['Get']['PokemonCards']
+	for i in range(len(images)):
+		image = images[i]
+		images[i] = f"data:image/jpeg;base64,{image['image']}"
+	# return f"<p>{images}</p>"
+	return render_template('index.html', value=images)
+
+@app.route('/search')
+def search_page():
+	return render_template('search.html')
+
+@app.route('/search/image', methods=['POST'])
+def search_image():
+	if 'image' in request.json:
+		image = request.json['image']
+		results = weaviate_img_search(image)
+		return jsonify({
+			"images": results
+		})
+	else:
+		return jsonify({'error': 'No image provided'})

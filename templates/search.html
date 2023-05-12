@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible"
+		content="IE=edge">
+	<meta name="viewport"
+		content="width=device-width, initial-scale=1.0">
+	<script defer
+		src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+	<title>Document</title>
+</head>
+
+<body>
+	<!-- <input type="file" accept="image/*"
+		x-on:change="console.log($event)"> -->
+	<form x-data="{
+			userImage: '',
+			foundImages: [],
+			async getBase64(file) {
+				var reader = new FileReader();
+				reader.readAsDataURL(file);
+				return new Promise((resolve, reject) => {
+					reader.onload = () => {
+						this.userImage = reader.result
+						resolve()
+					}
+					reader.onerror = error => reject(error)
+				})
+			},
+			async submit($event) {
+				$event.preventDefault()
+				const res = await fetch('/search/image', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						image: this.userImage.split('base64,')[1]
+					})
+				})
+				const data = await res.json()
+				if ('images' in data) {
+					console.log(data.images)
+					this.foundImages = data.images
+				} else {
+					console.error(data)
+				}
+			},
+			b64ToSrc(b64) {
+				console.log(b64
+				)
+				return 'data:image/jpeg;base64,' + b64
+			}
+		}">
+		<template x-for="{image} in foundImages">
+			<img :src="b64ToSrc(image)" alt="">
+		</template>
+		<img style="max-width: 30rem;"
+			:src="userImage" alt="user image">
+		<input type="file" accept="image/*"
+			class="form-control"
+			x-on:change="await getBase64($event.srcElement.files[0])"
+			id="image" aria-describedby="imageHelp"
+			placeholder="Enter image" />
+
+		<button type="button" x-on:click="submit"
+			class="btn btn-block">
+			Submit
+		</button>
+	</form>
+</body>
+
+</html>
